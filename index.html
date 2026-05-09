@@ -517,7 +517,7 @@
  
   <header class="topbar">
     <button class="menu-button" onclick="abrirMenu()">☰</button>
-    <div class="brand">Ponto Verde Lorena</div>
+    <div class="brand">Ponto Verde</div>
   </header>
 
 
@@ -544,7 +544,7 @@
    
     <section class="hero" id="home">
       <div class="hero-content">
-        <h1>Ponto Verde Lorena</h1>
+        <h1>Ponto Verde</h1>
         <p>
           Um projeto voltado à conscientização ambiental e à divulgação de informações
           sobre descarte correto e coleta de resíduos em Lorena. Aqui você encontra
@@ -558,50 +558,26 @@
 
 
      
-      <section class="section">
-        <h2>Sobre o projeto</h2>
-        <div class="section-divider"></div>
-        <p class="lead">
-          O objetivo do <strong>Ponto Verde Lorena</strong> é facilitar o acesso à informação
-          sobre descarte responsável, incentivar práticas sustentáveis e aproximar a
-          população de ações ambientais locais.
-        </p>
-        <div class="info-grid">
-          <div class="info-card">
-            <h3>Conscientização</h3>
-            <p>Informar a população sobre a importância da separação correta dos resíduos e do impacto positivo da reciclagem.</p>
-          </div>
-          <div class="info-card">
-            <h3>Orientação</h3>
-            <p>Reunir dúvidas frequentes e responder de forma simples e objetiva para facilitar o entendimento.</p>
-          </div>
-          <div class="info-card">
-            <h3>Apoio à cidade</h3>
-            <p>Divulgar os tipos de coleta disponíveis em Lorena e fortalecer iniciativas de preservação ambiental.</p>
-          </div>
-        </div>
-      </section>
 
 
-     
       <section class="section mapa-section" id="mapa">
-        <h2>Mapa de coleta</h2>
+        <h2>Mapa de Coleta</h2>
         <div class="section-divider"></div>
-        <p class="lead">Pesquise uma cidade e encontre pontos de coleta e reciclagem automaticamente, com filtros por material e lista detalhada dos locais.</p>
-
+        <p class="lead">Consulte onde descartar cada material de forma correta e localize os ecopontos oficiais da cidade.</p>
 
         <div class="row g-3">
 
 
-         
+
           <div class="col-12 col-lg-4">
             <div class="card-painel">
 
 
+            
               <div class="mb-3">
-                <div class="titulo-secao">Buscar cidade</div>
+                <div class="titulo-secao">O que deseja descartar?</div>
                 <input type="text" id="searchInput" class="form-control mb-2"
-                  placeholder="Ex.: Lorena, Guaratinguetá, São Paulo">
+                  placeholder="Ex: pilhas, óleo, eletrônicos, recicláveis...">
                 <div class="d-flex gap-2 flex-wrap">
                   <button class="btn btn-verde flex-fill" id="searchBtn">Buscar</button>
                   <button class="btn btn-verde-claro flex-fill" id="clearBtn">Limpar</button>
@@ -627,7 +603,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="status-box p-2 small" id="statusTexto">Pesquise uma cidade para começar.</div>
+                <div class="status-box p-2 small" id="statusTexto">Informe o material acima para encontrar o local de descarte.</div>
               </div>
 
 
@@ -669,7 +645,33 @@
       </section>
 
 
+
+      <section class="section">
+        <h2>Sobre o Projeto</h2>
+        <div class="section-divider"></div>
+        <p class="lead">
+          O objetivo do <strong>Ponto Verde Lorena</strong> é facilitar o acesso à informação
+          sobre descarte responsável, incentivar práticas sustentáveis e aproximar a
+          população de ações ambientais locais.
+        </p>
+        <div class="info-grid">
+          <div class="info-card">
+            <h3>Conscientização</h3>
+            <p>Informar a população sobre a importância da separação correta dos resíduos e do impacto positivo da reciclagem.</p>
+          </div>
+          <div class="info-card">
+            <h3>Orientação</h3>
+            <p>Reunir dúvidas frequentes e responder de forma simples e objetiva para facilitar o entendimento.</p>
+          </div>
+          <div class="info-card">
+            <h3>Apoio à cidade</h3>
+            <p>Divulgar os tipos de coleta disponíveis em Lorena e fortalecer iniciativas de preservação ambiental.</p>
+          </div>
+        </div>
+      </section>
      
+
+
       <section class="section" id="perguntas">
         <h2>Perguntas informativas</h2>
         <div class="section-divider"></div>
@@ -811,10 +813,10 @@
 
 
     function getMateriais(p){
-      const m=[];
-      if(p.tipo&&p.tipo!=="Coleta seletiva / reciclagem") m.push(normMat(p.tipo));
-      if(Array.isArray(p.materials)) p.materials.forEach(x=>{const n=normMat(x);if(n&&!m.includes(n))m.push(n);});
-      if(!m.length) m.push("Coleta seletiva / reciclagem");
+      const m = [];
+      // No seu banco o campo se chama 'tipo'
+      if(p.tipo) m.push(normMat(p.tipo));
+      if(!m.length) m.push("Geral");
       return m;
     }
 
@@ -841,10 +843,13 @@
 
     function addMarkers(pontos){
       limparMarkers();
+      // Ajustado para usar 'latitude' e 'longitude' do seu banco
       pontos.forEach((p,i)=>{
-        const m=L.marker([p.lat,p.lon]).addTo(map);
-        m.bindPopup(`<strong>${esc(p.nome||`Ponto ${i+1}`)}</strong><br>${esc(p.endereco||"")}<br>${esc(getMateriais(p).join(", "))}`);
-        markers.push(m);
+        if (p.latitude && p.longitude) {
+          const m = L.marker([p.latitude, p.longitude]).addTo(map);
+          m.bindPopup(`<strong>${esc(p.nome||`Ponto ${i+1}`)}</strong><br>${esc(p.endereco||"")}<br>${esc(getMateriais(p).join(", "))}`);
+          markers.push(m);
+        }
       });
       if(markers.length) map.fitBounds(L.featureGroup(markers).getBounds().pad(0.2));
     }
@@ -869,10 +874,14 @@
         card.querySelector("button").addEventListener("click",()=>{
           document.getElementById("mapa").scrollIntoView({behavior:"smooth"});
           setTimeout(()=>{
-            map.setView([p.lat,p.lon],17);
-            const mk=markers.find(m=>{const pos=m.getLatLng();return Math.abs(pos.lat-p.lat)<1e-6&&Math.abs(pos.lng-p.lon)<1e-6;});
+            // Usando os nomes completos das colunas
+            map.setView([p.latitude, p.longitude], 17);
+            const mk = markers.find(m => {
+              const pos = m.getLatLng();
+              return Math.abs(pos.lat - p.latitude) < 1e-6 && Math.abs(pos.lng - p.longitude) < 1e-6;
+            });
             if(mk) mk.openPopup();
-          },400);
+          }, 400);
         });
         resultsList.appendChild(card);
       });
@@ -881,7 +890,7 @@
 
     function atualizarResumo(pontos, label){
       totalPontos.textContent=pontos.length;
-      if(!label){ statusTexto.textContent="Pesquise uma cidade para começar."; return; }
+      if(!label){ statusTexto.textContent="Informe o material acima para encontrar o local de descarte."; return; }
       statusTexto.textContent=activeMaterial!=="Todos"
         ?`${pontos.length} ponto(s) em ${label}, filtro: "${activeMaterial}".`
         :pontos.length?`${pontos.length} ponto(s) encontrados em ${label}.`:`Nenhum ponto em ${label}.`;
@@ -957,7 +966,7 @@
       limparMarkers(); limparUserMarker(); map.setView([-22.733,-45.119],12);
       totalPontos.textContent="0"; materiaisCount.textContent="0";
       resultsCountText.textContent="0 resultado(s)";
-      statusTexto.textContent="Pesquise uma cidade para começar.";
+      statusTexto.textContent="Informe o material acima para encontrar o local de descarte.";
       chipsContainer.innerHTML=`<button type="button" class="chip-btn active" data-material="Todos">Todos</button>`;
       resultsList.innerHTML=`<div class="text-secondary small p-2">Nenhuma pesquisa feita ainda.</div>`;
     }
