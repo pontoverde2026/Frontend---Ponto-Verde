@@ -783,7 +783,15 @@
     const loadingText      = document.getElementById("loadingText");
     const chipsContainer   = document.getElementById("chipsContainer");
     const resultsCountText = document.getElementById("resultsCountText");
-
+  // Configuração do pino vermelho para o usuário
+    const redIcon = new L.Icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
 
     let markers=[], userMarker=null, allPoints=[], activeMaterial="Todos", currentSearchLabel="";
     let userLat = null, userLon = null; // Guardam a posição exata do usuário
@@ -877,6 +885,12 @@
       pontos.forEach((p,i)=>{
         const card=document.createElement("div");
         card.className="resultado-card";
+
+        // 1. Lógica para a quilometragem: se o backend enviou a distância, formatamos
+        const distanciaTexto = p.distancia_km 
+          ? `<span class="badge bg-light text-success border ms-2" style="font-size: 0.7rem;">📍 A ${p.distancia_km.toFixed(1)} km</span>` 
+          : "";
+
         const tags=getMateriais(p).map(m=>`<span class="tag-material">${esc(m)}</span>`).join("");
         
         // 1. Puxa a descrição do banco (se existir)
@@ -886,7 +900,10 @@
         const linkMaps = `https://www.google.com/maps/dir/?api=1&destination=${p.latitude},${p.longitude}`;
 
         card.innerHTML=`
-          <div class="fw-bold small mb-1" style="color:var(--verde-profundo)">${esc(p.nome||`Ponto ${i+1}`)}</div>
+          <div class="d-flex justify-content-between align-items-start mb-1">
+            <div class="fw-bold small" style="color:var(--verde-profundo)">${esc(p.nome||`Ponto ${i+1}`)}</div>
+            ${distanciaTexto}
+          </div>
           <div class="small text-secondary mb-1">${esc(p.endereco||"Endereço não informado")}</div>
           ${desc}
           <div class="mb-3">${tags}</div>
@@ -947,8 +964,8 @@
         // Construímos a carga de dados (payload)
         const payload = { textoUsuario: textoDigitado };
         
-        // Se temos a localização e o usuário usou o botão de GPS, mandamos pro backend
-        if (userLat && userLon && textoDigitado.toLowerCase() === "pontos próximos a mim") {
+        // Se temos a localização, mandamos pro backend para ordenar por distância
+        if (userLat && userLon) {
             payload.lat = userLat;
             payload.lon = userLon;
         }
@@ -1027,16 +1044,19 @@
       navigator.geolocation.getCurrentPosition(async pos=>{
         const lat=pos.coords.latitude, lon=pos.coords.longitude;
         
-        // Salva as coordenadas globalmente
         userLat = lat; userLon = lon; 
 
         limparUserMarker();
-        userMarker=L.marker([lat,lon]).addTo(map).bindPopup("Você está aqui").openPopup();
-        map.setView([lat,lon],14);
+        userMarker = L.marker([lat,lon], {icon: redIcon}).addTo(map).bindPopup("Você está aqui").openPopup();
+        map.setView([lat,lon], 14);
         
-
-        searchInput.value = `pontos próximos a mim`; 
-        pesquisar(); 
+        // Se a barra estiver vazia, pede o material. Se já tiver material, pesquisa direto!
+        const textoAtual = searchInput.value.trim();
+        if (textoAtual === "") {
+            alert("📍 Localização encontrada! Agora digite qual material você quer descartar (ex: pilhas) e clique em Buscar.");
+        } else {
+            pesquisar();
+        }
       },()=>alert("Não foi possível obter sua localização."));
     }
 
