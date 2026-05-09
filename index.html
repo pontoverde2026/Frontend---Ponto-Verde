@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ponto Verde Lorena</title>
+  <title>Ponto Verde</title>
 
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
@@ -786,7 +786,7 @@
 
 
     let markers=[], userMarker=null, allPoints=[], activeMaterial="Todos", currentSearchLabel="";
-
+    let userLat = null, userLon = null; // Guardam a posição exata do usuário
 
     function setLoading(on, txt="Buscando dados..."){
       loadingText.textContent=txt;
@@ -932,7 +932,7 @@
       if(!textoDigitado){ alert("Digite o que deseja descartar (ex: pilhas, óleo)."); return; }
 
       // 1. Ativa o carregamento visual
-      setLoading(true, "A IA está analisando seu resíduo...");
+      setLoading(true, "Estamos analisando seu resíduo...");
       resultsList.innerHTML = `<div class="text-secondary small p-2">Consultando base oficial de Lorena...</div>`;
       
       // Reseta os contadores da interface
@@ -944,11 +944,20 @@
         limparUserMarker(); 
         activeMaterial = "Todos";
 
+        // Construímos a carga de dados (payload)
+        const payload = { textoUsuario: textoDigitado };
+        
+        // Se temos a localização e o usuário usou o botão de GPS, mandamos pro backend
+        if (userLat && userLon && textoDigitado.toLowerCase() === "pontos próximos a mim") {
+            payload.lat = userLat;
+            payload.lon = userLon;
+        }
+
         // 2. Chamada direta para o seu Backend no Render
         const resposta = await fetch('https://ponto-verde.onrender.com/pesquisar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ textoUsuario: textoDigitado })
+            body: JSON.stringify(payload)
         });
 
         if (!resposta.ok) throw new Error("O servidor oficial está processando muitas requisições. Tente em instantes.");
@@ -986,13 +995,30 @@
 
 
     function limpar(){
-      searchInput.value=""; activeMaterial="Todos"; allPoints=[]; currentSearchLabel="";
-      limparMarkers(); limparUserMarker(); map.setView([-22.733,-45.119],12);
-      totalPontos.textContent="0"; materiaisCount.textContent="0";
-      resultsCountText.textContent="0 resultado(s)";
-      statusTexto.textContent="Informe o material acima para encontrar o local de descarte.";
-      chipsContainer.innerHTML=`<button type="button" class="chip-btn active" data-material="Todos">Todos</button>`;
-      resultsList.innerHTML=`<div class="text-secondary small p-2">Nenhuma pesquisa feita ainda.</div>`;
+      // 1. Limpa os campos de texto e filtros
+      searchInput.value = "";
+      activeMaterial = "Todos";
+      allPoints = [];
+      currentSearchLabel = "";
+      
+      // 2. Reseta as coordenadas de GPS (Crucial para a nova lógica)
+      userLat = null; 
+      userLon = null;
+
+      // 3. Limpa o mapa (Ecopontos e marcador de usuário)
+      limparMarkers();
+      limparUserMarker();
+      map.setView([-22.733, -45.119], 12); // Volta para a visão geral de Lorena
+
+      // 4. Reseta os contadores da interface
+      totalPontos.textContent = "0";
+      materiaisCount.textContent = "0";
+      resultsCountText.textContent = "0 resultado(s)";
+
+      // 5. Reseta as mensagens e elementos visuais
+      statusTexto.textContent = "Informe o material acima para encontrar o local de descarte.";
+      chipsContainer.innerHTML = `<button type="button" class="chip-btn active" data-material="Todos">Todos</button>`;
+      resultsList.innerHTML = `<div class="text-secondary small p-2">Nenhuma pesquisa feita ainda.</div>`;
     }
 
 
@@ -1000,11 +1026,15 @@
       if(!navigator.geolocation){alert("Geolocalização não suportada.");return;}
       navigator.geolocation.getCurrentPosition(async pos=>{
         const lat=pos.coords.latitude, lon=pos.coords.longitude;
+        
+        // Salva as coordenadas globalmente
+        userLat = lat; userLon = lon; 
+
         limparUserMarker();
         userMarker=L.marker([lat,lon]).addTo(map).bindPopup("Você está aqui").openPopup();
         map.setView([lat,lon],14);
         
-        // Agora avisamos a IA que queremos pontos próximos a estas coordenadas
+
         searchInput.value = `pontos próximos a mim`; 
         pesquisar(); 
       },()=>alert("Não foi possível obter sua localização."));
