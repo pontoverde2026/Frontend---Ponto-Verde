@@ -805,10 +805,14 @@
 
 
     function esc(t){
-      if(!t) return "";
-      return String(t).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
-    }
+  if(!t) return "";
+  return String(t)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 
     function limparMarkers(){ markers.forEach(m=>map.removeLayer(m)); markers=[]; }
@@ -957,8 +961,7 @@
       materiaisCount.textContent = "...";
       resultsCountText.textContent = "..."; 
 
-      try {
-        limparUserMarker(); 
+      try { 
         activeMaterial = "Todos";
 
         // Construímos a carga de dados (payload)
@@ -1040,24 +1043,58 @@
 
 
     function minhaLocalizacao(){
-      if(!navigator.geolocation){alert("Geolocalização não suportada.");return;}
-      navigator.geolocation.getCurrentPosition(async pos=>{
-        const lat=pos.coords.latitude, lon=pos.coords.longitude;
-        
-        userLat = lat; userLon = lon; 
+      if(!navigator.geolocation){
+          alert("Seu navegador não suporta geolocalização.");
+          return;
+      }
+      
+      const locateBtn = document.getElementById("locateBtn");
+      locateBtn.innerHTML = "⏳ Buscando GPS...";
 
-        limparUserMarker();
-        userMarker = L.marker([lat,lon], {icon: redIcon}).addTo(map).bindPopup("Você está aqui").openPopup();
-        map.setView([lat,lon], 14);
-        
-        // Se a barra estiver vazia, pede o material. Se já tiver material, pesquisa direto!
-        const textoAtual = searchInput.value.trim();
-        if (textoAtual === "") {
-            alert("📍 Localização encontrada! Agora digite qual material você quer descartar (ex: pilhas) e clique em Buscar.");
-        } else {
-            pesquisar();
-        }
-      },()=>alert("Não foi possível obter sua localização."));
+      // CONFIGURAÇÃO PARA PC: 
+      // enableHighAccuracy: false ajuda o PC a responder mais rápido via IP/Wi-Fi
+      // timeout: 10000 desiste após 10 segundos em vez de travar o site
+      const opcoesGPS = { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 };
+
+      navigator.geolocation.getCurrentPosition(
+        async pos => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          
+          userLat = lat; 
+          userLon = lon; 
+
+          limparUserMarker();
+          
+          // Criamos o marcador e o pop-up
+          userMarker = L.marker([lat,lon], {icon: redIcon}).addTo(map).bindPopup("Você está aqui");
+          
+          // A MÁGICA PARA O POP-UP NÃO SUMIR:
+          // Abrimos ele e centralizamos o mapa
+          userMarker.openPopup();
+          map.setView([lat,lon], 14);
+          
+          locateBtn.innerHTML = "📍 Minha localização";
+          
+          const textoAtual = searchInput.value.trim();
+          if (textoAtual === "") {
+              alert("📍 Localização encontrada! Agora digite o material e clique em Buscar.");
+          } else {
+              // Chamamos a pesquisa, mas o marcador 'userMarker' está fora da 
+              // função limparMarkers() das buscas, então ele permanecerá lá.
+              pesquisar(); 
+          }
+        },
+        (erro) => {
+          locateBtn.innerHTML = "📍 Minha localização";
+          if(erro.code === 1) {
+              alert("⚠️ Acesso Negado! Verifique as permissões de localização no seu navegador.");
+          } else {
+              alert("⚠️ O GPS do PC demorou muito a responder. Tente recarregar a página ou usar o celular.");
+          }
+        }, 
+        opcoesGPS
+      );
     }
 
 
