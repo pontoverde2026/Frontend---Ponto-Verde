@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ponto Verde Lorena</title>
+
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+
+  <style>
+
+
+    /* mudei tudo desse trem, só confia */
+    :root {
+      --verde-profundo:#203b20;
+      --verde:#3f6f38;
+      --verde-medio:#5f8b54;
+      --verde-claro:#dfead7;
+      --verde-suave:#eef5e8;
+      --creme:#fbf7ec;
+      --creme-2:#f4eddc;
+      --texto:#22301f;
+      --texto-suave:#66705f;
+      --borda:rgba(63,111,56,0.18);
+      --sombra:0 24px 60px rgba(31,59,32,0.14);
+      --sombra-card:0 18px 38px rgba(43,75,39,0.11);
+      --radius-xl:34px;
+      --radius-lg:24px;
+      --radius-md:18px;
+    }
+
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body {
+      min-height:100vh;
+      background:
+        radial-gradient(circle at 8% 12%, rgba(182,207,159,.65), transparent 32%),
+        radial-gradient(circle at 92% 8%, rgba(230,221,190,.85), transparent 28%),
+        linear-gradient(135deg,#8ba276 0%, #edf3e6 38%, #f8f2e3 100%);
+      color:var(--texto);
+      font-family: Georgia, 'Times New Roman', serif;
+      overflow-x:hidden;
+    }
+    body::before {
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      opacity:.28;
+      background-image:
+        linear-gradient(rgba(255,255,255,.28) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.2) 1px, transparent 1px);
+      background-size:46px 46px;
+      mask-image:linear-gradient(to bottom, black, transparent 75%);
+    }
+    a { text-decoration:none; color:inherit; }
+
+
+    .topbar {
+      position:fixed; top:22px; left:50%; transform:translateX(-50%);
+      width:min(1180px, calc(100% - 42px)); height:72px;
+      background:rgba(255,252,241,.86);
+      color:var(--verde-profundo);
+      display:flex; align-items:center; padding:0 24px;
+      z-index:1200;
+      border:1px solid rgba(255,255,255,.66);
+      border-radius:999px;
+      box-shadow:0 18px 40px rgba(39,75,38,.16);
+      backdrop-filter:blur(18px);
+      -webkit-backdrop-filter:blur(18px);
+    }
+    .menu-button {
+      width:46px; height:46px;
+      display:grid; place-items:center;
+      background:linear-gradient(135deg,var(--verde),var(--verde-profundo));
+      border:none; color:white;
+      border-radius:50%;
+      font-size:1.55rem; cursor:pointer; margin-right:16px;
+      box-shadow:0 12px 24px rgba(45,85,46,.24);
+      transition:transform .25s ease, box-shadow .25s ease;
+      line-height:1;
+    }
+    .menu-button:hover { transform:translateY(-2px) rotate(3deg); box-shadow:0 16px 30px rgba(45,85,46,.32); }
+    .brand {
+      font-size:1.55rem;
+      font-weight:700;
+      letter-spacing:.03em;
+      color:var(--verde-profundo);
+    }
+    .brand::after {
+      content:"";
+      display:inline-block;
+      width:9px; height:9px;
+      margin-left:10px;
+      border-radius:50%;
+      background:#83a864;
+      box-shadow:14px -7px 0 #c8d7aa;
+    }
+
+
+    .sidebar {
+      position:fixed;
+      top:0;
+      left:-340px;
+      width:320px;
+      height:100vh;
+      padding-top:22px;
+      background:linear-gradient(155deg,rgba(31,59,32,.96),rgba(63,111,56,.94));
+      backdrop-filter:blur(16px);
+      -webkit-backdrop-filter:blur(16px);
+      color:#f9f7ed;
+      z-index:1300;
+      transition:left .38s cubic-bezier(.2,.8,.2,1);
+      box-shadow:22px 0 60px rgba(0,0,0,.18);
+      overflow-y:auto;
+      border-right:1px solid rgba(255,255,255,.14);
+    }
+    .sidebar.active { left:0; }
+    .sidebar-close {
+      width:46px; height:46px;
+      display:grid; place-items:center;
+      margin:0 20px 22px auto;
+      font-size:1.65rem;
+      cursor:pointer;
+      color:#f9f7ed;
+      background:rgba(255,255,255,.10);
+      border-radius:50%;
+      transition:.25s ease;
+    }
+    .sidebar-close:hover { background:rgba(255,255,255,.18); transform:rotate(6deg); }
+    .sidebar nav { padding:0 14px; }
+    .sidebar nav a {
+      display:block;
+      padding:16px 18px;
+      margin:8px 0;
+      font-size:1rem;
+      font-weight:600;
+      color:#f7f3df;
+      border-radius:18px;
+      transition:.28s ease;
+      font-family:Arial, Helvetica, sans-serif;
+      letter-spacing:.01em;
+    }
+    .sidebar nav a:hover {
+      background:rgba(255,255,255,.13);
+      transform:translateX(6px);
+    }
+    .overlay {
+      position:fixed;
+      inset:0;
+      background:rgba(20,32,19,.32);
+      backdrop-filter:blur(2px);
+      opacity:0;
+      visibility:hidden;
+      transition:.25s ease;
+      z-index:1250;
+    }
+    .overlay.active { opacity:1; visibility:visible; }
+
+
+    .page {
+      width:min(1180px, calc(100% - 42px));
+      margin:118px auto 38px;
+      background:rgba(255,252,241,.92);
+      border-radius:var(--radius-xl);
+      overflow:hidden;
+      box-shadow:var(--sombra);
+      border:1px solid rgba(255,255,255,.72);
+    }
+
+
+    .hero {
+      position:relative;
+      min-height:520px;
+      background:
+        linear-gradient(90deg,rgba(21,42,22,.78) 0%,rgba(38,63,32,.42) 46%,rgba(38,63,32,.12) 100%),
+        url("https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1600&q=80") center/cover no-repeat;
+      display:flex;
+      align-items:center;
+      padding:86px 78px;
+      isolation:isolate;
+    }
+    .hero::after {
+      content:"";
+      position:absolute;
+      inset:auto 0 0 0;
+      height:130px;
+      background:linear-gradient(to bottom, transparent, rgba(255,252,241,.98));
+      z-index:-1;
+    }
+    .hero-content {
+      max-width:760px;
+      color:#fffaf0;
+      animation:subir .8s ease both;
+    }
+    .hero-content::before {
+      content:"Mapeamento de descarte de resíduos";
+      display:inline-block;
+      margin-bottom:18px;
+      padding:9px 16px;
+      border:1px solid rgba(255,255,255,.38);
+      border-radius:999px;
+      background:rgba(255,255,255,.12);
+      backdrop-filter:blur(10px);
+      font-family:Arial, Helvetica, sans-serif;
+      font-size:.82rem;
+      font-weight:700;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .hero h1 {
+      font-size:clamp(3rem,7vw,6.8rem);
+      line-height:.92;
+      margin-bottom:22px;
+      font-weight:500;
+      letter-spacing:-.055em;
+      text-shadow:0 10px 34px rgba(0,0,0,.34);
+    }
+    .hero p {
+      max-width:720px;
+      font-family:Arial, Helvetica, sans-serif;
+      font-size:1.24rem;
+      line-height:1.75;
+      color:rgba(255,250,240,.92);
+      text-shadow:0 4px 16px rgba(0,0,0,.28);
+    }
+
+
+    .content { padding:56px 56px 66px; }
+    .section {
+      margin-bottom:62px;
+      scroll-margin-top:118px;
+    }
+    .section h2 {
+      font-size:clamp(2.2rem,4.2vw,4.4rem);
+      color:var(--verde-profundo);
+      margin-bottom:10px;
+      font-weight:500;
+      letter-spacing:-.045em;
+      text-align:center;
+    }
+    .section-divider {
+      width:90px;
+      height:2px;
+      background:linear-gradient(90deg,transparent,var(--verde-medio),transparent);
+      margin:0 auto 24px;
+    }
+    .section p.lead {
+      max-width:820px;
+      margin:0 auto 34px;
+      font-family:Arial, Helvetica, sans-serif;
+      font-size:1.08rem;
+      line-height:1.8;
+      color:var(--texto-suave);
+      text-align:center;
+    }
+
+
+    .info-grid, .coleta-grid {
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:22px;
+    }
+    .coleta-grid { grid-template-columns:repeat(2,1fr); }
+    .info-card, .faq-card, .card-painel {
+      position:relative;
+      background:rgba(255,253,244,.86);
+      border-radius:var(--radius-lg);
+      box-shadow:var(--sombra-card);
+      overflow:hidden;
+      border:1px solid var(--borda);
+      transition:transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+    }
+    .info-card::before, .faq-card::before {
+      content:"";
+      position:absolute;
+      inset:0 0 auto 0;
+      height:6px;
+      background:linear-gradient(90deg,var(--verde),#b8c99b,#eadbbb);
+      opacity:.92;
+    }
+    .info-card:hover, .faq-card:hover, .resultado-card:hover {
+      transform:translateY(-6px);
+      box-shadow:0 24px 46px rgba(43,75,39,.16);
+      border-color:rgba(63,111,56,.28);
+    }
+    .info-card h3, .faq-card h3 {
+      background:transparent;
+      color:var(--verde-profundo);
+      font-size:1.35rem;
+      padding:26px 24px 8px;
+      font-weight:600;
+      letter-spacing:-.02em;
+    }
+    .info-card p {
+      padding:8px 24px 28px;
+      font-family:Arial, Helvetica, sans-serif;
+      font-size:1rem;
+      line-height:1.7;
+      color:var(--texto-suave);
+    }
+
+
+    .faq-grid {
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:20px;
+    }
+    .faq-card { cursor:pointer; }
+    .faq-card h3 {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:14px;
+      padding-bottom:22px;
+    }
+    .faq-card h3::after {
+      content:"+";
+      min-width:36px; height:36px;
+      display:grid; place-items:center;
+      font-size:1.45rem;
+      font-weight:400;
+      color:white;
+      background:var(--verde);
+      border-radius:50%;
+      transition:transform .25s ease, background .25s ease;
+    }
+    .faq-card.active h3::after { content:"–"; transform:rotate(180deg); background:var(--verde-profundo); }
+    .faq-card p {
+      max-height:0;
+      overflow:hidden;
+      padding:0 24px;
+      font-family:Arial, Helvetica, sans-serif;
+      font-size:1rem;
+      line-height:1.72;
+      color:var(--texto-suave);
+      transition:max-height .35s ease, padding .35s ease;
+    }
+    .faq-card.active p { max-height:240px; padding:0 24px 28px; }
+
+
+    .mapa-section {
+      background:linear-gradient(180deg,rgba(230,240,220,.86),rgba(255,252,241,.88));
+      margin-left:-24px;
+      margin-right:-24px;
+      padding:42px 24px;
+      border-radius:var(--radius-xl);
+      border:1px solid rgba(63,111,56,.12);
+    }
+    .card-painel {
+      background:rgba(255,253,244,.92);
+      padding:24px;
+      font-family:Arial, Helvetica, sans-serif;
+    }
+    .titulo-secao {
+      color:var(--verde-profundo);
+      font-weight:800;
+      font-size:.78rem;
+      text-transform:uppercase;
+      letter-spacing:.09em;
+      margin-bottom:.75rem;
+    }
+    .form-control {
+      border-radius:16px;
+      border:1px solid var(--borda);
+      background:#fffdf4;
+      padding:12px 14px;
+      box-shadow:none !important;
+    }
+    .form-control:focus {
+      border-color:rgba(63,111,56,.55);
+      box-shadow:0 0 0 .2rem rgba(63,111,56,.12) !important;
+    }
+    .btn-verde, .btn-verde-claro {
+      border-radius:999px;
+      font-weight:700;
+      padding:.72rem 1rem;
+      transition:.25s ease;
+    }
+    .btn-verde {
+      background:linear-gradient(135deg,var(--verde),var(--verde-profundo));
+      border-color:transparent;
+      color:white;
+      box-shadow:0 12px 24px rgba(63,111,56,.22);
+    }
+    .btn-verde:hover { transform:translateY(-2px); color:white; box-shadow:0 16px 28px rgba(63,111,56,.30); }
+    .btn-verde-claro {
+      background:var(--verde-suave);
+      border:1px solid var(--borda);
+      color:var(--verde-profundo);
+    }
+    .btn-verde-claro:hover { background:#dfeeda; color:var(--verde-profundo); transform:translateY(-2px); }
+    .status-box {
+      background:linear-gradient(180deg,#f7fbf2,#e9f1df);
+      border:1px solid var(--borda);
+      border-radius:18px;
+    }
+    .text-success { color:var(--verde) !important; }
+    .chip-wrap { display:flex; flex-wrap:wrap; gap:.45rem; }
+    .chip-btn {
+      border:1px solid var(--borda);
+      background:#fffdf4;
+      color:var(--verde-profundo);
+      border-radius:999px;
+      padding:.42rem .82rem;
+      font-size:.78rem;
+      font-weight:800;
+      cursor:pointer;
+      transition:.23s ease;
+    }
+    .chip-btn:hover { background:var(--verde-suave); transform:translateY(-1px); }
+    .chip-btn.active { background:var(--verde); border-color:var(--verde); color:white; }
+    .resultado-card {
+      border:1px solid rgba(63,111,56,.15);
+      border-left:5px solid var(--verde-medio);
+      border-radius:18px;
+      background:#fffdf4;
+      padding:14px;
+      margin-bottom:12px;
+      transition:.25s ease;
+    }
+    .tag-material {
+      background:var(--verde-suave);
+      color:var(--verde-profundo);
+      border:1px solid var(--borda);
+      border-radius:999px;
+      padding:3px 9px;
+      font-size:.7rem;
+      font-weight:800;
+      display:inline-block;
+      margin:2px 2px 0 0;
+    }
+    #map {
+      width:100%; height:70vh; min-height:420px;
+      border-radius:26px;
+      border:1px solid var(--borda);
+      box-shadow:var(--sombra-card);
+    }
+    .loading-box {
+      display:none;
+      background:var(--verde-suave);
+      color:var(--verde-profundo);
+      border:1px solid var(--borda);
+      border-radius:14px;
+      font-weight:700;
+      padding:10px 14px;
+      font-size:.875rem;
+    }
+    .loading-box.show { display:block; }
+    .resultados-scroll { max-height:480px; overflow-y:auto; padding-right:4px; }
+
+
+    .colab-box {
+      background:
+        radial-gradient(circle at 12% 20%, rgba(255,255,255,.16), transparent 26%),
+        linear-gradient(135deg,var(--verde-profundo),var(--verde));
+      color:#fffaf0;
+      border-radius:var(--radius-xl);
+      padding:38px 34px;
+      box-shadow:var(--sombra-card);
+      border:1px solid rgba(255,255,255,.14);
+    }
+    .colab-box p {
+      margin:0;
+      font-family:Arial, Helvetica, sans-serif;
+      font-size:1.08rem;
+      line-height:1.8;
+      text-align:center;
+    }
+    footer {
+      background:linear-gradient(135deg,var(--verde-profundo),#314f2d);
+      color:#f7f1df;
+      text-align:center;
+      padding:30px 18px;
+      font-family:Arial, Helvetica, sans-serif;
+      font-size:.98rem;
+    }
+
+
+    #home, #mapa, #perguntas, #coletas, #colaboracao { scroll-margin-top:118px; }
+
+
+    @keyframes subir {
+      from { opacity:0; transform:translateY(18px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+
+
+    @media(max-width:1100px){
+      .content { padding:44px 34px 56px; }
+      .info-grid { grid-template-columns:1fr; }
+      .hero { padding:72px 46px; }
+      .brand { font-size:1.35rem; }
+    }
+    @media(max-width:900px){
+      .topbar { top:14px; width:calc(100% - 24px); height:64px; }
+      .menu-button { width:42px; height:42px; font-size:1.35rem; }
+      .page { width:calc(100% - 22px); margin:92px auto 20px; border-radius:26px; }
+      .hero { padding:62px 24px; min-height:440px; }
+      .hero p { font-size:1rem; }
+      .content { padding:34px 18px 42px; }
+      .faq-grid, .coleta-grid { grid-template-columns:1fr; }
+      .mapa-section { margin-left:0; margin-right:0; padding:28px 14px; }
+      .sidebar { width:286px; left:-286px; }
+      #map { height:52vh; min-height:360px; }
+      .resultados-scroll { max-height:none; }
+    }
+</style>
+</head>
+<body>
+
+
+ 
+  <header class="topbar">
+    <button class="menu-button" onclick="abrirMenu()">☰</button>
+    <div class="brand">Ponto Verde Lorena</div>
+  </header>
+
+
+ 
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-close" onclick="fecharMenu()">✕</div>
+    <nav>
+      <a href="#home"        onclick="fecharMenu()"> Home</a>
+      <a href="#mapa"        onclick="fecharMenu()"> Mapa de Coleta</a>
+      <a href="#perguntas"   onclick="fecharMenu()"> Perguntas Informativas</a>
+      <a href="#coletas"     onclick="fecharMenu()"> Tipos de Coleta</a>
+      <a href="#colaboracao" onclick="fecharMenu()"> Colaboração</a>
+    </nav>
+  </aside>
+
+
+  <div class="overlay" id="overlay" onclick="fecharMenu()"></div>
+
+
+ 
+  <main class="page">
+
+
+   
+    <section class="hero" id="home">
+      <div class="hero-content">
+        <h1>Ponto Verde Lorena</h1>
+        <p>
+          Um projeto voltado à conscientização ambiental e à divulgação de informações
+          sobre descarte correto e coleta de resíduos em Lorena. Aqui você encontra
+          orientações, tipos de coleta e formas de colaboração em um único lugar.
+        </p>
+      </div>
+    </section>
+
+
+    <div class="content">
+
+
+     
+      <section class="section">
+        <h2>Sobre o projeto</h2>
+        <div class="section-divider"></div>
+        <p class="lead">
+          O objetivo do <strong>Ponto Verde Lorena</strong> é facilitar o acesso à informação
+          sobre descarte responsável, incentivar práticas sustentáveis e aproximar a
+          população de ações ambientais locais.
+        </p>
+        <div class="info-grid">
+          <div class="info-card">
+            <h3>Conscientização</h3>
+            <p>Informar a população sobre a importância da separação correta dos resíduos e do impacto positivo da reciclagem.</p>
+          </div>
+          <div class="info-card">
+            <h3>Orientação</h3>
+            <p>Reunir dúvidas frequentes e responder de forma simples e objetiva para facilitar o entendimento.</p>
+          </div>
+          <div class="info-card">
+            <h3>Apoio à cidade</h3>
+            <p>Divulgar os tipos de coleta disponíveis em Lorena e fortalecer iniciativas de preservação ambiental.</p>
+          </div>
+        </div>
+      </section>
+
+
+     
+      <section class="section mapa-section" id="mapa">
+        <h2>Mapa de coleta</h2>
+        <div class="section-divider"></div>
+        <p class="lead">Pesquise uma cidade e encontre pontos de coleta e reciclagem automaticamente, com filtros por material e lista detalhada dos locais.</p>
+
+
+        <div class="row g-3">
+
+
+         
+          <div class="col-12 col-lg-4">
+            <div class="card-painel">
+
+
+              <div class="mb-3">
+                <div class="titulo-secao">Buscar cidade</div>
+                <input type="text" id="searchInput" class="form-control mb-2"
+                  placeholder="Ex.: Lorena, Guaratinguetá, São Paulo">
+                <div class="d-flex gap-2 flex-wrap">
+                  <button class="btn btn-verde flex-fill" id="searchBtn">Buscar</button>
+                  <button class="btn btn-verde-claro flex-fill" id="clearBtn">Limpar</button>
+                  <button class="btn btn-verde-claro w-100 mt-1" id="locateBtn">📍 Minha localização</button>
+                </div>
+                <div class="loading-box mt-2" id="loadingText">Buscando dados...</div>
+              </div>
+
+
+              <div class="mb-3">
+                <div class="titulo-secao">Resumo</div>
+                <div class="row g-2 mb-2">
+                  <div class="col-6">
+                    <div class="status-box p-2 text-center">
+                      <div class="fw-bold fs-4 text-success" id="totalPontos">0</div>
+                      <div class="small text-secondary">Pontos</div>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="status-box p-2 text-center">
+                      <div class="fw-bold fs-4 text-success" id="materiaisCount">0</div>
+                      <div class="small text-secondary">Materiais</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="status-box p-2 small" id="statusTexto">Pesquise uma cidade para começar.</div>
+              </div>
+
+
+              <div class="mb-3">
+                <div class="titulo-secao">Filtrar por material</div>
+                <div class="chip-wrap" id="chipsContainer">
+                  <button class="chip-btn active" data-material="Todos">Todos</button>
+                </div>
+              </div>
+
+
+              <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div class="titulo-secao mb-0">Locais encontrados</div>
+                  <small class="text-secondary" id="resultsCountText">0 resultado(s)</small>
+                </div>
+                <div class="resultados-scroll" id="resultsList">
+                  <div class="text-secondary small p-2">Nenhuma pesquisa feita ainda.</div>
+                </div>
+              </div>
+
+
+            </div>
+          </div>
+
+
+         
+          <div class="col-12 col-lg-8">
+            <div class="position-relative">
+              <div style="position:absolute;top:12px;right:12px;z-index:999;background:white;border-radius:8px;padding:6px 12px;font-size:0.78rem;border:1px solid var(--borda);">
+                Clique em um resultado para ver no mapa
+              </div>
+              <div id="map"></div>
+            </div>
+          </div>
+
+
+        </div>
+      </section>
+
+
+     
+      <section class="section" id="perguntas">
+        <h2>Perguntas informativas</h2>
+        <div class="section-divider"></div>
+        <p class="lead">Clique em uma pergunta para visualizar a resposta.</p>
+        <div class="faq-grid">
+          <div class="faq-card" onclick="toggleFaq(this)">
+            <h3>O que é coleta seletiva?</h3>
+            <p>É a separação e o recolhimento de resíduos de acordo com o material, como papel, plástico, vidro e metal, facilitando a reciclagem.</p>
+          </div>
+          <div class="faq-card" onclick="toggleFaq(this)">
+            <h3>Por que separar o lixo reciclável?</h3>
+            <p>Porque isso reduz a quantidade de resíduos enviados para aterros, economiza recursos naturais e ajuda no reaproveitamento de materiais.</p>
+          </div>
+          <div class="faq-card" onclick="toggleFaq(this)">
+            <h3>Posso misturar lixo orgânico com reciclável?</h3>
+            <p>O ideal é não misturar. O material reciclável sujo ou contaminado pode dificultar ou até impedir o processo de reciclagem.</p>
+          </div>
+          <div class="faq-card" onclick="toggleFaq(this)">
+            <h3>O que fazer com óleo de cozinha usado?</h3>
+            <p>O correto é armazená-lo em garrafa fechada e encaminhá-lo a pontos de coleta específicos, evitando contaminação da água e do solo.</p>
+          </div>
+          <div class="faq-card" onclick="toggleFaq(this)">
+            <h3>Onde descartar pilhas e baterias?</h3>
+            <p>Pilhas e baterias devem ser levadas a pontos de coleta específicos, pois possuem substâncias que podem causar danos ao meio ambiente.</p>
+          </div>
+          <div class="faq-card" onclick="toggleFaq(this)">
+            <h3>Vidro quebrado pode ir na coleta comum?</h3>
+            <p>O ideal é embalar o vidro com segurança, identificar o material e verificar a orientação local para descarte, evitando riscos para os coletores.</p>
+          </div>
+        </div>
+      </section>
+
+
+     
+      <section class="section" id="coletas">
+        <h2>Tipos de coletas oferecidas em Lorena</h2>
+        <div class="section-divider"></div>
+        <p class="lead">Categorias de coleta disponíveis no município. Você pode editar com as informações oficiais da prefeitura.</p>
+        <div class="coleta-grid">
+          <div class="info-card">
+            <h3>Coleta comum</h3>
+            <p>Recolhimento de resíduos domésticos não recicláveis feito em dias e horários definidos pela prefeitura.</p>
+          </div>
+          <div class="info-card">
+            <h3>Coleta seletiva</h3>
+            <p>Destinada a materiais recicláveis como papel, plástico, metal e vidro, desde que estejam limpos e separados corretamente.</p>
+          </div>
+          <div class="info-card">
+            <h3>Coleta de eletrônicos</h3>
+            <p>Voltada ao descarte adequado de equipamentos eletrônicos, evitando danos ambientais causados por componentes tóxicos.</p>
+          </div>
+          <div class="info-card">
+            <h3>Coleta de óleo usado</h3>
+            <p>Permite o descarte correto do óleo de cozinha, que pode ser reaproveitado em outros processos em vez de contaminar o meio ambiente.</p>
+          </div>
+        </div>
+      </section>
+
+
+     
+      <section class="section" id="colaboracao">
+        <h2>Colaboração</h2>
+        <div class="section-divider"></div>
+        <div class="colab-box">
+          <p>Esta área pode ser usada futuramente para divulgar campanhas, voluntariado, parcerias, envio de sugestões ou participação da comunidade no projeto.</p>
+        </div>
+      </section>
+
+
+    </div>
+
+
+    <footer>
+      © 2026 - Ponto Verde Lorena | Projeto de conscientização ambiental
+    </footer>
+
+
+  </main>
+
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+  <script>
+   
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("overlay");
+    function abrirMenu(){ sidebar.classList.add("active"); overlay.classList.add("active"); }
+    function fecharMenu(){ sidebar.classList.remove("active"); overlay.classList.remove("active"); }
+    function toggleFaq(el){ el.classList.toggle("active"); }
+
+
+   
+    const map = L.map("map").setView([-22.733,-45.119],12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+      maxZoom:19, attribution:"&copy; OpenStreetMap"
+    }).addTo(map);
+
+
+    const searchInput      = document.getElementById("searchInput");
+    const searchBtn        = document.getElementById("searchBtn");
+    const clearBtn         = document.getElementById("clearBtn");
+    const locateBtn        = document.getElementById("locateBtn");
+    const resultsList      = document.getElementById("resultsList");
+    const totalPontos      = document.getElementById("totalPontos");
+    const materiaisCount   = document.getElementById("materiaisCount");
+    const statusTexto      = document.getElementById("statusTexto");
+    const loadingText      = document.getElementById("loadingText");
+    const chipsContainer   = document.getElementById("chipsContainer");
+    const resultsCountText = document.getElementById("resultsCountText");
+
+
+    let markers=[], userMarker=null, allPoints=[], activeMaterial="Todos", currentSearchLabel="";
+
+
+    function setLoading(on, txt="Buscando dados..."){
+      loadingText.textContent=txt;
+      loadingText.classList.toggle("show",on);
+      searchBtn.disabled=on;
+      searchBtn.textContent=on?"Buscando...":"Buscar";
+    }
+
+
+    function esc(t){
+      if(!t) return "";
+      return String(t).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+    }
+
+
+    function limparMarkers(){ markers.forEach(m=>map.removeLayer(m)); markers=[]; }
+    function limparUserMarker(){ if(userMarker){map.removeLayer(userMarker);userMarker=null;} }
+
+
+    function normMat(t){
+      return String(t||"").trim().replaceAll("_"," ").replace(/\s+/g," ").replace(/\b\w/g,l=>l.toUpperCase());
+    }
+
+
+    function getMateriais(p){
+      const m=[];
+      if(p.tipo&&p.tipo!=="Coleta seletiva / reciclagem") m.push(normMat(p.tipo));
+      if(Array.isArray(p.materials)) p.materials.forEach(x=>{const n=normMat(x);if(n&&!m.includes(n))m.push(n);});
+      if(!m.length) m.push("Coleta seletiva / reciclagem");
+      return m;
+    }
+
+
+    function criarChips(pontos){
+      const set=new Set();
+      pontos.forEach(p=>getMateriais(p).forEach(m=>set.add(m)));
+      chipsContainer.innerHTML="";
+      ["Todos",...Array.from(set).sort((a,b)=>a.localeCompare(b,"pt-BR"))].forEach(mat=>{
+        const c=document.createElement("button");
+        c.type="button"; c.className="chip-btn"+(mat===activeMaterial?" active":"");
+        c.dataset.material=mat; c.textContent=mat;
+        c.addEventListener("click",()=>{ activeMaterial=mat; atualizarChips(); aplicarFiltro(); });
+        chipsContainer.appendChild(c);
+      });
+      materiaisCount.textContent=set.size;
+    }
+
+
+    function atualizarChips(){
+      document.querySelectorAll(".chip-btn").forEach(c=>c.classList.toggle("active",c.dataset.material===activeMaterial));
+    }
+
+
+    function addMarkers(pontos){
+      limparMarkers();
+      pontos.forEach((p,i)=>{
+        const m=L.marker([p.lat,p.lon]).addTo(map);
+        m.bindPopup(`<strong>${esc(p.nome||`Ponto ${i+1}`)}</strong><br>${esc(p.endereco||"")}<br>${esc(getMateriais(p).join(", "))}`);
+        markers.push(m);
+      });
+      if(markers.length) map.fitBounds(L.featureGroup(markers).getBounds().pad(0.2));
+    }
+
+
+    function renderLista(pontos, label=""){
+      resultsList.innerHTML="";
+      resultsCountText.textContent=`${pontos.length} resultado(s)`;
+      if(!pontos.length){
+        resultsList.innerHTML=`<div class="text-secondary small p-2">Nenhum ponto encontrado${label?` em <strong>${esc(label)}</strong>`:""}.`;
+        return;
+      }
+      pontos.forEach((p,i)=>{
+        const card=document.createElement("div");
+        card.className="resultado-card";
+        const tags=getMateriais(p).map(m=>`<span class="tag-material">${esc(m)}</span>`).join("");
+        card.innerHTML=`
+          <div class="fw-bold small mb-1" style="color:var(--verde-escuro)">${esc(p.nome||`Ponto ${i+1}`)}</div>
+          <div class="small text-secondary mb-1">${esc(p.endereco||"Endereço não informado")}</div>
+          <div class="mb-2">${tags}</div>
+          <button class="btn btn-verde btn-sm w-100">Ver no mapa</button>`;
+        card.querySelector("button").addEventListener("click",()=>{
+          document.getElementById("mapa").scrollIntoView({behavior:"smooth"});
+          setTimeout(()=>{
+            map.setView([p.lat,p.lon],17);
+            const mk=markers.find(m=>{const pos=m.getLatLng();return Math.abs(pos.lat-p.lat)<1e-6&&Math.abs(pos.lng-p.lon)<1e-6;});
+            if(mk) mk.openPopup();
+          },400);
+        });
+        resultsList.appendChild(card);
+      });
+    }
+
+
+    function atualizarResumo(pontos, label){
+      totalPontos.textContent=pontos.length;
+      if(!label){ statusTexto.textContent="Pesquise uma cidade para começar."; return; }
+      statusTexto.textContent=activeMaterial!=="Todos"
+        ?`${pontos.length} ponto(s) em ${label}, filtro: "${activeMaterial}".`
+        :pontos.length?`${pontos.length} ponto(s) encontrados em ${label}.`:`Nenhum ponto em ${label}.`;
+    }
+
+
+    function aplicarFiltro(){
+      const f=activeMaterial==="Todos"?allPoints:allPoints.filter(p=>getMateriais(p).includes(activeMaterial));
+      addMarkers(f); renderLista(f,currentSearchLabel); atualizarResumo(f,currentSearchLabel);
+    }
+
+
+    async function pesquisar() {
+      const textoDigitado = searchInput.value.trim();
+      if(!textoDigitado){ alert("Digite o que deseja descartar (ex: pilhas, óleo)."); return; }
+
+      // 1. Ativa o carregamento visual
+      setLoading(true, "A IA está analisando seu resíduo...");
+      resultsList.innerHTML = `<div class="text-secondary small p-2">Consultando base oficial de Lorena...</div>`;
+      
+      // Reseta os contadores da interface
+      totalPontos.textContent = "..."; 
+      materiaisCount.textContent = "...";
+      resultsCountText.textContent = "..."; 
+
+      try {
+        limparUserMarker(); 
+        activeMaterial = "Todos";
+
+        // 2. Chamada direta para o seu Backend no Render
+        const resposta = await fetch('https://ponto-verde.onrender.com/pesquisar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ textoUsuario: textoDigitado })
+        });
+
+        if (!resposta.ok) throw new Error("O servidor oficial está processando muitas requisições. Tente em instantes.");
+        
+        const dados = await resposta.json();
+
+        if (dados.status === "sucesso") {
+            // Puxa a lista de ecopontos que o seu Supabase retornou
+            allPoints = dados.dados_mapa; 
+            currentSearchLabel = textoDigitado;
+
+            // Exibe a mensagem inteligente do Gemini
+            statusTexto.innerHTML = `<strong>Guia Ponto Verde:</strong> ${esc(dados.mensagem_chat)}`;
+
+            // Atualiza o mapa e a lista lateral com os dados do banco
+            criarChips(allPoints); 
+            aplicarFiltro(); 
+        } else {
+             throw new Error(dados.mensagem_chat || "Não encontramos pontos para este material.");
+        }
+
+      } catch(e) {
+        // Tratamento de erro unificado
+        allPoints = []; 
+        limparMarkers();
+        chipsContainer.innerHTML = `<button type="button" class="chip-btn active" data-material="Todos">Todos</button>`;
+        totalPontos.textContent = "0"; 
+        resultsCountText.textContent = "0";
+        statusTexto.innerHTML = `<span class="text-danger">Busca indisponível no momento.</span>`;
+        resultsList.innerHTML = `<div class="alert alert-danger mb-0 small"><strong>Aviso:</strong> ${esc(e.message)}</div>`;
+      } finally { 
+        setLoading(false); 
+      }
+    }
+
+
+    function limpar(){
+      searchInput.value=""; activeMaterial="Todos"; allPoints=[]; currentSearchLabel="";
+      limparMarkers(); limparUserMarker(); map.setView([-22.733,-45.119],12);
+      totalPontos.textContent="0"; materiaisCount.textContent="0";
+      resultsCountText.textContent="0 resultado(s)";
+      statusTexto.textContent="Pesquise uma cidade para começar.";
+      chipsContainer.innerHTML=`<button type="button" class="chip-btn active" data-material="Todos">Todos</button>`;
+      resultsList.innerHTML=`<div class="text-secondary small p-2">Nenhuma pesquisa feita ainda.</div>`;
+    }
+
+
+    function minhaLocalizacao(){
+      if(!navigator.geolocation){alert("Geolocalização não suportada.");return;}
+      navigator.geolocation.getCurrentPosition(async pos=>{
+        const lat=pos.coords.latitude, lon=pos.coords.longitude;
+        limparUserMarker();
+        userMarker=L.marker([lat,lon]).addTo(map).bindPopup("Você está aqui").openPopup();
+        map.setView([lat,lon],14);
+        
+        // Agora avisamos a IA que queremos pontos próximos a estas coordenadas
+        searchInput.value = `pontos próximos a mim`; 
+        pesquisar(); 
+      },()=>alert("Não foi possível obter sua localização."));
+    }
+
+
+    searchBtn.addEventListener("click",pesquisar);
+    clearBtn.addEventListener("click",limpar);
+    locateBtn.addEventListener("click",minhaLocalizacao);
+    searchInput.addEventListener("keydown",e=>{ if(e.key==="Enter") pesquisar(); });
+
+
+   
+    new IntersectionObserver(entries=>{
+      if(entries[0].isIntersecting) setTimeout(()=>map.invalidateSize(),200);
+    },{threshold:0.1}).observe(document.getElementById("mapa"));
+  </script>
+</body>
+</html>
+
