@@ -843,11 +843,23 @@
 
     function addMarkers(pontos){
       limparMarkers();
-      // Ajustado para usar 'latitude' e 'longitude' do seu banco
       pontos.forEach((p,i)=>{
         if (p.latitude && p.longitude) {
           const m = L.marker([p.latitude, p.longitude]).addTo(map);
-          m.bindPopup(`<strong>${esc(p.nome||`Ponto ${i+1}`)}</strong><br>${esc(p.endereco||"")}<br>${esc(getMateriais(p).join(", "))}`);
+          
+          // Link direto para o modo "Direções/Rotas" do Google Maps
+          const linkMaps = `https://www.google.com/maps/dir/?api=1&destination=${p.latitude},${p.longitude}`;
+          
+          m.bindPopup(`
+            <div style="min-width: 160px;">
+              <strong style="color:var(--verde-profundo)">${esc(p.nome||`Ponto ${i+1}`)}</strong><br>
+              <span class="small text-secondary">${esc(p.endereco||"")}</span><br>
+              <div class="mt-1 mb-2">${getMateriais(p).map(mat => `<span class="tag-material">${esc(mat)}</span>`).join("")}</div>
+              <a href="${linkMaps}" target="_blank" class="btn btn-verde btn-sm w-100 text-white" style="text-decoration:none; font-size: 0.75rem;">
+                🚗 Abrir no Google Maps
+              </a>
+            </div>
+          `);
           markers.push(m);
         }
       });
@@ -866,15 +878,27 @@
         const card=document.createElement("div");
         card.className="resultado-card";
         const tags=getMateriais(p).map(m=>`<span class="tag-material">${esc(m)}</span>`).join("");
+        
+        // 1. Puxa a descrição do banco (se existir)
+        const desc = p.descricao ? `<div class="small text-secondary mb-2" style="font-size: 0.85em; font-style: italic;">${esc(p.descricao)}</div>` : "";
+        
+        // 2. Cria o link mágico do Google Maps com a Rota
+        const linkMaps = `https://www.google.com/maps/dir/?api=1&destination=${p.latitude},${p.longitude}`;
+
         card.innerHTML=`
-          <div class="fw-bold small mb-1" style="color:var(--verde-escuro)">${esc(p.nome||`Ponto ${i+1}`)}</div>
+          <div class="fw-bold small mb-1" style="color:var(--verde-profundo)">${esc(p.nome||`Ponto ${i+1}`)}</div>
           <div class="small text-secondary mb-1">${esc(p.endereco||"Endereço não informado")}</div>
-          <div class="mb-2">${tags}</div>
-          <button class="btn btn-verde btn-sm w-100">Ver no mapa</button>`;
-        card.querySelector("button").addEventListener("click",()=>{
+          ${desc}
+          <div class="mb-3">${tags}</div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-verde-claro btn-sm flex-fill btn-ver-mapa">📍 No mapa</button>
+            <a href="${linkMaps}" target="_blank" class="btn btn-verde btn-sm flex-fill text-center">🚗 Como chegar</a>
+          </div>`;
+          
+        // 3. Atualizado para buscar apenas o botão correto
+        card.querySelector(".btn-ver-mapa").addEventListener("click",()=>{
           document.getElementById("mapa").scrollIntoView({behavior:"smooth"});
           setTimeout(()=>{
-            // Usando os nomes completos das colunas
             map.setView([p.latitude, p.longitude], 17);
             const mk = markers.find(m => {
               const pos = m.getLatLng();
