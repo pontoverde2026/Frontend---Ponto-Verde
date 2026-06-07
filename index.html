@@ -866,12 +866,14 @@
             <div style="min-width: 160px;">
               <strong style="color:var(--verde-profundo)">${esc(p.nome||`Ponto ${i+1}`)}</strong><br>
               <span class="small text-secondary">${esc(p.endereco||"")}</span><br>
+              ${p.horario ? `<small class="text-muted d-block mt-1">🕒 Horário: ${esc(p.horario)}</small>` : ""}
               <div class="mt-1 mb-2">${getMateriais(p).map(mat => `<span class="tag-material">${esc(mat)}</span>`).join("")}</div>
               <a href="${linkMaps}" target="_blank" class="btn btn-verde btn-sm w-100 text-white" style="text-decoration:none; font-size: 0.75rem;">
                 🚗 Abrir no Google Maps
               </a>
             </div>
           `);
+
           markers.push(m);
         }
       });
@@ -909,6 +911,7 @@
             ${distanciaTexto}
           </div>
           <div class="small text-secondary mb-1">${esc(p.endereco||"Endereço não informado")}</div>
+          ${p.horario ? `<div class="small text-muted mb-2" style="font-size: 0.85em;">🕒 ${esc(p.horario)}</div>` : ""}
           ${desc}
           <div class="mb-3">${tags}</div>
           <div class="d-flex gap-2">
