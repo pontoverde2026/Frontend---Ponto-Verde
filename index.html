@@ -785,12 +785,16 @@
     function toggleFaq(el){ el.classList.toggle("active"); }
 
 
-   
-    const map = L.map("map").setView([-22.733,-45.119],12);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
-      maxZoom:19, attribution:"&copy; OpenStreetMap"
+    // 1. Alteramos esta primeira linha adicionando o { zoomControl: false }
+    const map = L.map("map", { zoomControl: false }).setView([-22.733, -45.119], 12);
+
+    // 2. A parte do mapa base (tileLayer) continua exatamente igual
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19, attribution: "&copy; OpenStreetMap"
     }).addTo(map);
 
+    // 3. Adicionamos o novo zoom no canto inferior direito AQUI no final
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     const searchInput      = document.getElementById("searchInput");
     const searchBtn        = document.getElementById("searchBtn");
