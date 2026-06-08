@@ -627,7 +627,7 @@
               </div>
 
 
-              <div class="mb-3">
+              <div class="mb-3 d-none">
                 <div class="titulo-secao">Filtrar por material</div>
                 <div class="chip-wrap" id="chipsContainer">
                   <button class="chip-btn active" data-material="Todos">Todos</button>
@@ -653,7 +653,7 @@
          
           <div class="col-12 col-lg-8">
             <div class="position-relative">
-              <div class="aviso-mapa" style="position:absolute;top:12px;right:12px;z-index:999;background:white;border-radius:8px;padding:6px 12px;font-size:0.78rem;border:1px solid var(--borda);">
+              <div class="aviso-mapa" style="position:absolute;top:12px;right:12px;z-index:500;background:white;border-radius:8px;padding:6px 12px;font-size:0.78rem;border:1px solid var(--borda);">
                 Clique em um resultado para ver no mapa
               </div>
               <div id="map"></div>
@@ -693,7 +693,7 @@
 
 
       <section class="section" id="perguntas">
-        <h2>Perguntas informativas</h2>
+        <h2>Perguntas Frequentes</h2>
         <div class="section-divider"></div>
         <p class="lead">Clique em uma pergunta para visualizar a resposta.</p>
         <div class="faq-grid">
@@ -729,29 +729,64 @@
       <section class="section" id="coletas">
         <h2>Tipos de coletas oferecidas em Lorena</h2>
         <div class="section-divider"></div>
-        <p class="lead">Categorias de coleta disponíveis no município. Você pode editar com as informações oficiais da prefeitura.</p>
+        <p class="lead">Categorias de coleta disponíveis no município.</p>
         <div class="coleta-grid">
           <div class="info-card">
-            <h3>Coleta comum</h3>
+            <h3>Coleta Comum</h3>
             <p>Recolhimento de resíduos domésticos não recicláveis feito em dias e horários definidos pela prefeitura.</p>
           </div>
           <div class="info-card">
-            <h3>Coleta seletiva</h3>
+            <h3>Coleta Seletiva</h3>
             <p>Destinada a materiais recicláveis como papel, plástico, metal e vidro, desde que estejam limpos e separados corretamente.</p>
           </div>
           <div class="info-card">
-            <h3>Coleta de eletrônicos</h3>
+            <h3>Coleta de Eletrônicos</h3>
             <p>Voltada ao descarte adequado de equipamentos eletrônicos, evitando danos ambientais causados por componentes tóxicos.</p>
           </div>
           <div class="info-card">
-            <h3>Coleta de óleo usado</h3>
-            <p>Permite o descarte correto do óleo de cozinha, que pode ser reaproveitado em outros processos em vez de contaminar o meio ambiente.</p>
+            <h3>Coleta de Medicamentos</h3>
+            <p>Permite o descarte correto de medicamentos vencidos ou em desuso, evitando a contaminação do meio ambiente e riscos à saúde pública.</p>
           </div>
         </div>
       </section>
 
 
-     
+      <section class="section" id="colaboracao">
+        <h2>Colaboração</h2>
+        <div class="section-divider"></div>
+  
+        <div class="colab-box">
+    
+          <div class="text-center text-white">
+            <p class="mb-4">
+              O Ponto Verde é uma iniciativa para a conscientização ambiental.<br>
+              Para parcerias, sugestões ou dúvidas, entre em contato:<br>
+              <a href="mailto:artur.caires@usp.br" class="text-white fw-bold" style="text-decoration: underline;">artur.caires@usp.br</a>
+            </p>
+
+            <hr class="my-4 mx-auto" style="opacity: 0.2; width: 50%;">
+
+            <div class="d-flex justify-content-center align-items-end gap-5 flex-wrap">
+        
+              <div class="text-center">
+                <span class="d-block mb-2 small fw-bold text-uppercase" style="letter-spacing: 1px; color: var(--verde-claro);">Apoio Institucional</span>
+                <a href="https://lorena.sp.gov.br/" target="_blank" title="Acessar site da Prefeitura">
+                  <img src="caminho-do-brasao-lorena.png" alt="Prefeitura de Lorena" style="height: 75px; object-fit: contain;">
+                </a>
+              </div>
+
+              <div class="text-center">
+                <span class="d-block mb-2 small fw-bold text-uppercase" style="letter-spacing: 1px; color: var(--verde-claro);">Realização</span>
+                <a href="https://www.usp.br/" target="_blank" title="Acessar site da USP">
+                  <img src="caminho-da-logo-usp.png" alt="Universidade de São Paulo" style="height: 75px; object-fit: contain;">
+                </a>
+              </div>
+
+            </div>
+          </div>
+          </div>
+      </section>
+
       <section class="section" id="colaboracao">
         <h2>Colaboração</h2>
         <div class="section-divider"></div>
@@ -896,7 +931,7 @@
                 🚗 Abrir no Google Maps
               </a>
             </div>
-          `);
+          `, { autoPanPaddingTopLeft: [0, 120] });
 
           markers.push(m);
         }
