@@ -509,6 +509,26 @@
       #map { height:52vh; min-height:360px; }
       .resultados-scroll { max-height:none; }
     }
+    @media (max-width: 768px) {
+      /* Ajuste do pop-up do Leaflet (que você já ia colocar) */
+      .leaflet-popup-content {
+        max-width: 220px !important;
+        font-size: 0.85rem;
+        margin: 10px !important;
+      }
+      .leaflet-popup-content strong {
+        font-size: 0.95rem;
+      }
+
+      /* Ajuste da frase agora com o nome certo! */
+      .aviso-mapa { 
+        font-size: 0.7rem !important; /* Deixa o texto bem menorzinho */
+        padding: 4px 8px !important; /* Afina as bordas da caixinha */
+        top: 5px !important; /* Sobe a caixinha um pouco mais pro topo */
+        right: 5px !important; /* Empurra mais pro canto direito */
+        pointer-events: none; /* Deixa o clique passar reto pro mapa */
+      }
+    } 
 </style>
 </head>
 <body>
@@ -633,7 +653,7 @@
          
           <div class="col-12 col-lg-8">
             <div class="position-relative">
-              <div style="position:absolute;top:12px;right:12px;z-index:999;background:white;border-radius:8px;padding:6px 12px;font-size:0.78rem;border:1px solid var(--borda);">
+              <div class="aviso-mapa" style="position:absolute;top:12px;right:12px;z-index:999;background:white;border-radius:8px;padding:6px 12px;font-size:0.78rem;border:1px solid var(--borda);">
                 Clique em um resultado para ver no mapa
               </div>
               <div id="map"></div>
@@ -921,7 +941,7 @@
           
         // 3. Atualizado para buscar apenas o botão correto
         card.querySelector(".btn-ver-mapa").addEventListener("click",()=>{
-          document.getElementById("mapa").scrollIntoView({behavior:"smooth"});
+          document.getElementById("map").scrollIntoView({behavior:"smooth", block: "center"});
           setTimeout(()=>{
             map.setView([p.latitude, p.longitude], 17);
             const mk = markers.find(m => {
