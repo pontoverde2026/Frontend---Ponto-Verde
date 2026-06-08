@@ -520,13 +520,9 @@
         font-size: 0.95rem;
       }
 
-      /* Ajuste da frase agora com o nome certo! */
+      /* Oculta a frase completamente no celular para liberar o mapa */
       .aviso-mapa { 
-        font-size: 0.7rem !important; /* Deixa o texto bem menorzinho */
-        padding: 4px 8px !important; /* Afina as bordas da caixinha */
-        top: 5px !important; /* Sobe a caixinha um pouco mais pro topo */
-        right: 5px !important; /* Empurra mais pro canto direito */
-        pointer-events: none; /* Deixa o clique passar reto pro mapa */
+        display: none !important; 
       }
     } 
 </style>
@@ -761,38 +757,36 @@
             <p class="mb-4">
               O Ponto Verde é uma iniciativa para a conscientização ambiental.<br>
               Para parcerias, sugestões ou dúvidas, entre em contato:<br>
-              <a href="mailto:artur.caires@usp.br" class="text-white fw-bold" style="text-decoration: underline;">artur.caires@usp.br</a>
+              <a href="mailto:https://www.instagram.com/flordelis_eel/" class="text-white fw-bold" style="text-decoration: underline;">flordelis_eel</a>
             </p>
 
             <hr class="my-4 mx-auto" style="opacity: 0.2; width: 50%;">
 
-            <div class="d-flex justify-content-center align-items-end gap-5 flex-wrap">
-        
-              <div class="text-center">
-                <span class="d-block mb-2 small fw-bold text-uppercase" style="letter-spacing: 1px; color: var(--verde-claro);">Apoio Institucional</span>
-                <a href="https://lorena.sp.gov.br/" target="_blank" title="Acessar site da Prefeitura">
-                  <img src="caminho-do-brasao-lorena.png" alt="Prefeitura de Lorena" style="height: 75px; object-fit: contain;">
-                </a>
-              </div>
+              <div class="d-flex justify-content-center align-items-end gap-5 flex-wrap">
+  
+                <div class="text-center">
+                  <span class="d-block mb-2 small fw-bold text-uppercase" style="letter-spacing: 1px; color: var(--verde-claro);">Apoio Institucional</span>
+                  <a href="https://www.lorena.sp.gov.br/wordpress/index.php/espacosemear/" target="_blank" title="Acessar site da Prefeitura">
+                    <img src="img/semear.jpg" alt="Secretaria de Meio Ambiente de Lorena" style="height: 75px; object-fit: contain;">
+                  </a>
+                </div>
 
-              <div class="text-center">
-                <span class="d-block mb-2 small fw-bold text-uppercase" style="letter-spacing: 1px; color: var(--verde-claro);">Realização</span>
-                <a href="https://www.usp.br/" target="_blank" title="Acessar site da USP">
-                  <img src="caminho-da-logo-usp.png" alt="Universidade de São Paulo" style="height: 75px; object-fit: contain;">
-                </a>
-              </div>
+                <div class="text-center">
+                  <span class="d-block mb-2 small fw-bold text-uppercase" style="letter-spacing: 1px; color: var(--verde-claro);">Realização</span>
+                  <a href="https://www.eel.usp.br" target="_blank" title="Acessar site da USP">
+                    <img src="img/eelusp.gif" alt="Escola de Engenharia de Lorena - USP" style="height: 75px; object-fit: contain;">
+                  </a>
+                </div>
 
-            </div>
+                <div class="text-center">
+                  <span class="d-block mb-2 small fw-bold text-uppercase" style="letter-spacing: 1px; color: var(--verde-claro);">Parceria & Divulgação</span>
+                  <a href="https://www.instagram.com/flordelis_eel/" target="_blank" title="Acessar site do Parceiro">
+                    <img src="img/flordelis.jpg" alt="Flor de Lis" style="height: 75px; object-fit: contain;">
+                  </a>
+                </div>
+
           </div>
           </div>
-      </section>
-
-      <section class="section" id="colaboracao">
-        <h2>Colaboração</h2>
-        <div class="section-divider"></div>
-        <div class="colab-box">
-          <p>Esta área pode ser usada futuramente para divulgar campanhas, voluntariado, parcerias, envio de sugestões ou participação da comunidade no projeto.</p>
-        </div>
       </section>
 
 
@@ -931,7 +925,7 @@
                 🚗 Abrir no Google Maps
               </a>
             </div>
-          `, { autoPanPaddingTopLeft: [0, 120] });
+          `);
 
           markers.push(m);
         }
